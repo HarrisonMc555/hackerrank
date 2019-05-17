@@ -36,7 +36,7 @@ public class Solution {
 
     // if (true) return smallestCommonFactorMultiplier;
 
-    return smallestCommonFactorMultiplier * smallestCommonFactor;
+    return smallestCommonFactorMultiplier;
   }
 
   static Multiset<Integer> getFactors(int number) {
