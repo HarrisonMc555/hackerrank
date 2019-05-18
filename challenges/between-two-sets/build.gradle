@@ -39,3 +39,8 @@ test {
     events = ["passed", "failed", "skipped"]
   }
 }
+
+task run(type:JavaExec) {
+   main = 'Solution'
+   classpath = sourceSets.main.runtimeClasspath
+}
