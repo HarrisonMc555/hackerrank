@@ -1,18 +1,19 @@
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Multisets;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Solution {
 
   public static void main(String[] args) {
-    // int[] a = {3, 4};
-    // int[] b = {144, 36, 48};
+    int[] a2 = {3, 4};
+    int[] b2 = {24, 48};
+    System.out.println(Solution.getTotalX(a2, b2));
+
     int[] a = {2, 4};
     int[] b = {16, 32, 96};
-    System.out.format("getTotalX: %d%n", getTotalX(a, b));
+    System.out.println(Solution.getTotalX(a, b));
   }
 
   static int getTotalX(int[] a, int[] b) {
@@ -20,70 +21,54 @@ public class Solution {
       return 0;
     }
 
-    Multiset<Integer> allSourceFactors = factorsUnion(Arrays.stream(a));
-    // Multiset<Integer> commonDestinationFactors = factorsIntersection(b);
-    int smallestCommonFactor = product(allSourceFactors.stream());
+    Map<Integer, Integer> allSourceFactors = factorsUnion(Arrays.stream(a));
+    int smallestCommonFactor =
+        allSourceFactors
+            .entrySet()
+            .stream()
+            .reduce(
+                1, (acc, entry) -> acc * pow(entry.getKey(), entry.getValue()), (x, y) -> x * y);
 
     if (Arrays.stream(b).anyMatch(x -> !isFactorOf(smallestCommonFactor, x))) {
-      System.out.format("The smallest factor (%d) is not a factor of one destination");
       return 0;
     }
 
     IntStream destinationsDivided = Arrays.stream(b).map(x -> x / smallestCommonFactor);
-    Multiset<Integer> commonDestinationFactors = factorsIntersection(destinationsDivided);
-    System.out.print("commonDestinationFactors:");
-    commonDestinationFactors
-        .stream()
-        .forEach(
-            x -> {
-              System.out.format(" %d", x);
-            });
-    System.out.println();
+    Map<Integer, Integer> commonDestinationFactors = factorsIntersection(destinationsDivided);
 
-    int smallestCommonFactorMultiplier = product(commonDestinationFactors.stream());
+    Stream<Integer> counts =
+        commonDestinationFactors.entrySet().stream().map(entry -> entry.getValue());
+    Stream<Integer> countsPlusOne = counts.map(x -> x + 1);
+    int numberOfCombinations = product(countsPlusOne);
 
-    System.out.format("smallestCommonFactorMultiplier: %d%n", smallestCommonFactorMultiplier);
-    return smallestCommonFactorMultiplier;
+    return numberOfCombinations;
   }
 
-  static Multiset<Integer> factors(int number) {
-    System.out.format("factors(%d)%n", number);
+  static Map<Integer, Integer> factors(int number) {
     if (number < 1) {
       throw new IllegalArgumentException("must be a positive number");
     } else if (number == 1) {
-      System.out.format("No factors for 1%n");
-      return HashMultiset.create();
+      return new HashMap<Integer, Integer>();
     }
-    Multiset<Integer> factors = HashMultiset.create();
+    Map<Integer, Integer> factors = new HashMap<Integer, Integer>();
     for (int factor = 2; number > 1; factor++) {
       for (; number % factor == 0; number /= factor) {
-        System.out.format("\t%d%n", factor);
-        factors.add(factor);
+        incrementValue(factors, factor);
       }
     }
     return factors;
   }
 
-  static Multiset<Integer> factorsUnion(IntStream numbers) {
-    Stream<Multiset<Integer>> factorsSets = numbers.mapToObj(number -> factors(number));
-    return factorsSets.reduce(HashMultiset.create(), (acc, set) -> Multisets.union(acc, set));
+  static Map<Integer, Integer> factorsUnion(IntStream numbers) {
+    Stream<Map<Integer, Integer>> factorsSets = numbers.mapToObj(number -> factors(number));
+    return factorsSets.reduce(new HashMap<Integer, Integer>(), (acc, set) -> union(acc, set));
   }
 
-  static Multiset<Integer> factorsIntersection(IntStream numbers) {
-    System.out.println("factorsIntersection");
-    Stream<Multiset<Integer>> factorsSets = numbers.mapToObj(number -> factors(number));
+  static Map<Integer, Integer> factorsIntersection(IntStream numbers) {
+    Stream<Map<Integer, Integer>> factorsSets = numbers.mapToObj(number -> factors(number));
     return factorsSets
-        .reduce(
-            (acc, set) -> {
-              System.out.print("acc: ");
-              acc.stream().forEach(x -> System.out.format(" %d", x));
-              System.out.println();
-              System.out.print("set: ");
-              set.stream().forEach(x -> System.out.format(" %d", x));
-              System.out.println();
-              return Multisets.intersection(acc, set);
-            })
-        .orElse(HashMultiset.create());
+        .reduce((acc, set) -> intersection(acc, set))
+        .orElse(new HashMap<Integer, Integer>());
   }
 
   static int product(Stream<Integer> stream) {
@@ -92,5 +77,53 @@ public class Solution {
 
   static boolean isFactorOf(int factor, int number) {
     return number % factor == 0;
+  }
+
+  static Map<Integer, Integer> intersection(
+      Map<Integer, Integer> set1, Map<Integer, Integer> set2) {
+    Map<Integer, Integer> result = new HashMap<Integer, Integer>();
+    for (Map.Entry<Integer, Integer> entry : set1.entrySet()) {
+      int key = entry.getKey();
+      int value1 = entry.getValue();
+      int value2 = set2.getOrDefault(key, 0);
+      int smallestValue = Math.min(value1, value2);
+      if (smallestValue > 0) {
+        result.put(key, smallestValue);
+      }
+    }
+    return result;
+  }
+
+  static Map<Integer, Integer> union(Map<Integer, Integer> set1, Map<Integer, Integer> set2) {
+    Map<Integer, Integer> result = new HashMap<Integer, Integer>();
+    for (Map.Entry<Integer, Integer> entry : set1.entrySet()) {
+      int key = entry.getKey();
+      int value1 = entry.getValue();
+      int value2 = set2.getOrDefault(key, 0);
+      int largestValue = Math.max(value1, value2);
+      result.put(key, largestValue);
+    }
+    for (Map.Entry<Integer, Integer> entry : set2.entrySet()) {
+      int key = entry.getKey();
+      int value1 = entry.getValue();
+      int value2 = set2.getOrDefault(key, 0);
+      int largestValue = Math.max(value1, value2);
+      result.put(key, largestValue);
+    }
+    return result;
+  }
+
+  static void incrementValue(Map<Integer, Integer> set, int key) {
+    int oldCount = set.getOrDefault(key, 0);
+    int newCount = oldCount + 1;
+    set.put(key, newCount);
+  }
+
+  static int pow(int base, int exponent) {
+    int result;
+    for (result = 1; exponent >= 1; exponent--) {
+      result *= base;
+    }
+    return result;
   }
 }
