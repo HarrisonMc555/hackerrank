@@ -7,12 +7,8 @@ import java.util.stream.Stream;
 public class Solution {
 
   public static void main(String[] args) {
-    int[] a2 = {3, 4};
-    int[] b2 = {24, 48};
-    System.out.println(Solution.getTotalX(a2, b2));
-
-    int[] a = {2, 4};
-    int[] b = {16, 32, 96};
+    int[] a = {3, 9, 6};
+    int[] b = {36, 72};
     System.out.println(Solution.getTotalX(a, b));
   }
 
@@ -22,12 +18,16 @@ public class Solution {
     }
 
     Map<Integer, Integer> allSourceFactors = factorsUnion(Arrays.stream(a));
+    // System.out.println("allSourceFactors:");
+    // printMap(allSourceFactors);
     int smallestCommonFactor =
         allSourceFactors
             .entrySet()
             .stream()
             .reduce(
                 1, (acc, entry) -> acc * pow(entry.getKey(), entry.getValue()), (x, y) -> x * y);
+
+    // System.out.format("smallestCommonFactor: %d%n", smallestCommonFactor);
 
     if (Arrays.stream(b).anyMatch(x -> !isFactorOf(smallestCommonFactor, x))) {
       return 0;
@@ -95,21 +95,37 @@ public class Solution {
   }
 
   static Map<Integer, Integer> union(Map<Integer, Integer> set1, Map<Integer, Integer> set2) {
+    // System.out.println("== union begin ==");
+    // System.out.println("set1 (before):");
+    // printMap(set1);
+    // System.out.println("set2 (before):");
+    // printMap(set2);
+
+    // System.out.println("doing union:");
     Map<Integer, Integer> result = new HashMap<Integer, Integer>();
     for (Map.Entry<Integer, Integer> entry : set1.entrySet()) {
       int key = entry.getKey();
       int value1 = entry.getValue();
       int value2 = set2.getOrDefault(key, 0);
       int largestValue = Math.max(value1, value2);
+      // System.out.format(
+      //     "key: %d%nvalue1: %d%nvalue2: %d%nlargestValue: %d%n", key, value1, value2,
+      // largestValue);
       result.put(key, largestValue);
     }
     for (Map.Entry<Integer, Integer> entry : set2.entrySet()) {
       int key = entry.getKey();
       int value1 = entry.getValue();
-      int value2 = set2.getOrDefault(key, 0);
+      int value2 = set1.getOrDefault(key, 0);
       int largestValue = Math.max(value1, value2);
+      // System.out.format(
+      //     "key: %d%nvalue1: %d%nvalue2: %d%nlargestValue: %d%n", key, value1, value2,
+      // largestValue);
       result.put(key, largestValue);
     }
+    // System.out.println("result (after):");
+    // printMap(result);
+    // System.out.println("== union end ==");
     return result;
   }
 
@@ -126,4 +142,10 @@ public class Solution {
     }
     return result;
   }
+
+  // static void printMap(Map<Integer, Integer> map) {
+  //   for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+  //     System.out.format("%d: %d%n", entry.getKey(), entry.getValue());
+  //   }
+  // }
 }
